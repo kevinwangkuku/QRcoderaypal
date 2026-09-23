@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const express = require('express');
@@ -19,6 +20,15 @@ function securityHeaders(req, res, next) {
   next();
 }
 
+function assetUrls(dir, files) {
+  return Object.fromEntries(
+    files.map((f) => {
+      const hash = crypto.createHash('sha256').update(fs.readFileSync(path.join(dir, f))).digest('hex').slice(0, 10);
+      return [f, `/${f}?v=${hash}`];
+    }),
+  );
+}
+
 function createApp({ config, db }) {
   const app = express();
   app.set('trust proxy', config.trustProxy);
@@ -27,6 +37,9 @@ function createApp({ config, db }) {
   app.disable('x-powered-by');
 
   app.locals.fmt = (iso) => formatTime(iso, config.tz);
+  app.locals.contact = config.contact;
+  // CSS / JS 網址加上內容雜湊（?v=…），檔案一改網址就變，瀏覽器不會拿到快取的舊版
+  app.locals.asset = assetUrls(path.join(__dirname, 'public'), ['style.css', 'admin.js']);
 
   app.use(securityHeaders);
   app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));

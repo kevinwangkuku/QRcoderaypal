@@ -30,6 +30,12 @@ function requireSecret(name, raw, minLength) {
   return raw;
 }
 
+function parseContactUrl(raw) {
+  if (!raw) return '';
+  if (!/^https?:\/\/\S+$/i.test(raw)) throw new Error(`CONTACT_URL 必須以 http:// 或 https:// 開頭，目前是「${raw}」`);
+  return raw;
+}
+
 // 讀取並驗證設定；不合法時丟出含原因的 Error
 function loadConfig(env = process.env) {
   const baseUrl = env.BASE_URL;
@@ -63,6 +69,14 @@ function loadConfig(env = process.env) {
     qrMaxVersion: parseIntIn('QR_MAX_VERSION', env.QR_MAX_VERSION, 2, 1, 40),
     qrMargin: parseIntIn('QR_MARGIN', env.QR_MARGIN, 2, 0, 10),
     tz: env.TZ || 'Asia/Taipei',
+    // 消費者頁面的聯絡資訊；沒設定的欄位不顯示
+    contact: {
+      name: env.CONTACT_NAME || '',
+      phone: env.CONTACT_PHONE || '',
+      email: env.CONTACT_EMAIL || '',
+      url: parseContactUrl(env.CONTACT_URL),
+      urlLabel: env.CONTACT_URL_LABEL || '線上客服',
+    },
   };
 }
 

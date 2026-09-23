@@ -1,0 +1,30 @@
+<%- include('../partials/head', { title: `測試卡 批次 #${batch.id}` }) %>
+<div class="no-print">
+  <h1>測試卡：批次 #<%= batch.id %></h1>
+  <p><span class="mono"><%= batch.product_id %></span> <%= batch.product_name %>，共 <%= batch.quantity.toLocaleString() %> 張</p>
+  <% if (batch.status === 'void') { %>
+  <p class="error">⚠ 此批次已作廢，消費者掃描會顯示「此標籤已作廢」。</p>
+  <% } %>
+  <form class="search" method="get" action="/admin/batches/<%= batch.id %>/cards">
+    <label>從第 <input name="from" type="number" min="1" max="<%= batch.quantity %>" value="<%= from %>"> 號</label>
+    <label>到第 <input name="to" type="number" min="1" max="<%= batch.quantity %>" value="<%= to %>"> 號</label>
+    <button type="submit">更新</button>
+    <button type="button" data-print>🖨 列印</button>
+  </form>
+  <p class="hint">一次最多 <%= maxCards %> 張，A4 每頁 15 張。卡片上同時印有驗證碼，<strong>僅供內部測試</strong>，請勿用於正式商品。</p>
+</div>
+
+<div class="cards">
+  <% for (const c of cards) { %>
+  <div class="test-card">
+    <div class="test-card-name"><%= batch.product_name %></div>
+    <div class="qr test-card-qr"><%- c.svg %></div>
+    <div class="test-card-meta">
+      <span>No. <%= c.sn %></span>
+      <span>驗證碼 <strong class="mono"><%= c.checkcode %></strong></span>
+    </div>
+  </div>
+  <% } %>
+</div>
+<% if (!cards.length) { %><p class="empty">這個範圍沒有標籤。</p><% } %>
+<%- include('../partials/foot') %>

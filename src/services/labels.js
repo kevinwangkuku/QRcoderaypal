@@ -89,6 +89,21 @@ function voidBatch(db, id) {
   return db.prepare("UPDATE batches SET status = 'void' WHERE id = ?").run(id).changes;
 }
 
+function restoreBatch(db, id) {
+  return db.prepare("UPDATE batches SET status = 'active' WHERE id = ?").run(id).changes;
+}
+
+function updateBatchNote(db, id, note) {
+  return db.prepare('UPDATE batches SET note = ? WHERE id = ?').run(note || null, id).changes;
+}
+
+// 測試卡用：批次內 sn 介於 from..to 的標籤
+function listBatchLabelsRange(db, batchId, from, to) {
+  return db
+    .prepare('SELECT sn, product_id, code, checkcode FROM labels WHERE batch_id = ? AND sn BETWEEN ? AND ? ORDER BY sn')
+    .all(batchId, from, to);
+}
+
 // 依 sn 順序分頁讀取，匯出大批次時不必一次載入記憶體。
 // 不用 stmt.iterate()：遊標開著時連線會被佔住，匯出途中 await 會讓其他請求無法查詢。
 function* iterateBatchLabels(db, batchId, pageSize = 2000) {
@@ -122,9 +137,19 @@ function listLabelEvents(db, labelId) {
   return db.prepare('SELECT * FROM events WHERE label_id = ? ORDER BY id DESC').all(labelId);
 }
 
-function voidLabel(db, id) {
-  return db.prepare("UPDATE labels SET status = 'void' WHERE id = ?").run(id).changes;
+// 後台對單張標籤的操作：更新後寫一筆事件，留下誰、何時操作的紀錄
+function adminLabelAction(sql, type) {
+  return (db, id, meta = {}) =>
+    db.transaction(() => {
+      const changes = db.prepare(sql).run(id).changes;
+      if (changes) logEvent(db, id, type, meta);
+      return changes;
+    })();
 }
+
+const voidLabel = adminLabelAction("UPDATE labels SET status = 'void' WHERE id = ?", 'admin_void');
+const restoreLabel = adminLabelAction("UPDATE labels SET status = 'active' WHERE id = ?", 'admin_restore');
+const unlockLabel = adminLabelAction('UPDATE labels SET fail_count = 0 WHERE id = ?', 'admin_unlock');
 
 function listSuspicious(db, { minScans, minVerifies, limit = 200 }) {
   return db
@@ -239,10 +264,15 @@ module.exports = {
   getBatch,
   listBatches,
   voidBatch,
+  restoreBatch,
+  updateBatchNote,
+  listBatchLabelsRange,
   iterateBatchLabels,
   findLabelByCode,
   listLabelEvents,
   voidLabel,
+  restoreLabel,
+  unlockLabel,
   listSuspicious,
   recordScan,
   verify,

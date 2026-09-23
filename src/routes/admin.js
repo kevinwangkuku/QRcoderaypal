@@ -5,6 +5,7 @@ const express = require('express');
 const multer = require('multer');
 const codes = require('../lib/codes');
 const images = require('../lib/images');
+const { hashIp, normalizeIp } = require('../lib/ip');
 const qr = require('../lib/qr');
 const { dateStamp } = require('../lib/time');
 const { writeExcel, writeSvgZip } = require('../lib/export');
@@ -220,7 +221,10 @@ function adminRouter({ config, db }) {
   // ---------- 批次 ----------
 
   router.get('/batches', (req, res) => {
-    res.render('admin/batches', { batches: labels.listBatches(db) });
+    const batches = labels.listBatches(db);
+    // 剛建立完成：頁面上方顯示下載按鈕，提醒把 Excel 交給條碼程式
+    const created = batches.find((b) => String(b.id) === req.query.created) || null;
+    res.render('admin/batches', { batches, created });
   });
 
   router.get('/batches/new', (req, res) => {
@@ -258,8 +262,8 @@ function adminRouter({ config, db }) {
     if (errors.length) {
       return res.status(400).render('admin/batch-form', { products: labels.listProducts(db), form, errors });
     }
-    labels.createBatch(db, form);
-    res.redirect('/admin/batches');
+    const batchId = labels.createBatch(db, form);
+    res.redirect(`/admin/batches?created=${batchId}`);
   });
 
   router.get('/batches/:id/excel', async (req, res, next) => {
@@ -296,27 +300,73 @@ function adminRouter({ config, db }) {
     res.redirect('/admin/batches');
   });
 
+  router.post('/batches/:id/restore', (req, res) => {
+    const batch = loadBatch(req, res);
+    if (!batch) return;
+    labels.restoreBatch(db, batch.id);
+    res.redirect('/admin/batches');
+  });
+
+  router.post('/batches/:id/note', (req, res) => {
+    const batch = loadBatch(req, res);
+    if (!batch) return;
+    labels.updateBatchNote(db, batch.id, String(req.body.note || '').trim().slice(0, 500));
+    res.redirect('/admin/batches');
+  });
+
+  // 測試卡：A4 排版，每張含 QR、編號、驗證碼；一次最多 MAX_CARDS 張
+  const MAX_CARDS = 300;
+  router.get('/batches/:id/cards', (req, res) => {
+    const batch = loadBatch(req, res);
+    if (!batch) return;
+    const int = (raw, fallback) => {
+      const n = Number(raw);
+      return Number.isInteger(n) && n >= 1 ? n : fallback;
+    };
+    const from = Math.min(int(req.query.from, 1), batch.quantity);
+    const to = Math.min(int(req.query.to, from + 23), batch.quantity, from + MAX_CARDS - 1);
+    const cards = labels.listBatchLabelsRange(db, batch.id, from, Math.max(from, to)).map((l) => ({
+      ...l,
+      svg: qr.toSvg(codes.buildQrData(config.baseUrl, l.product_id, l.code), {
+        ecLevel: config.qrEcLevel,
+        margin: config.qrMargin,
+      }),
+    }));
+    res.render('admin/cards', { batch, cards, from, to: Math.max(from, to), maxCards: MAX_CARDS });
+  });
+
   // ---------- 標籤查詢 ----------
 
   router.get('/labels', (req, res) => {
     const query = String(req.query.code || '').trim();
-    const code = query ? codes.normalizeCode(query) : null;
+    const code = query ? codes.extractCode(query) : null;
     const label = code ? labels.findLabelByCode(db, code) : null;
     res.render('admin/label', {
       query,
       label,
+      maxFails: labels.MAX_VERIFY_FAILS,
       events: label ? labels.listLabelEvents(db, label.id) : [],
       qrData: label ? codes.buildQrData(config.baseUrl, label.product_id, label.code) : null,
     });
   });
 
-  router.post('/labels/:id/void', (req, res, next) => {
+  // 單張標籤操作：作廢、恢復、解鎖；完成後回到該標籤的查詢頁
+  const labelAction = (action) => (req, res, next) => {
     if (!/^\d+$/.test(req.params.id)) return next();
-    const label = db.prepare('SELECT code FROM labels WHERE id = ?').get(Number(req.params.id));
+    const id = Number(req.params.id);
+    const label = db.prepare('SELECT code FROM labels WHERE id = ?').get(id);
     if (!label) return next();
-    labels.voidLabel(db, Number(req.params.id));
+    action(db, id, {
+      ip: normalizeIp(req.ip),
+      ipHash: hashIp(req.ip, config.ipHashSalt),
+      userAgent: req.get('user-agent'),
+    });
     res.redirect(`/admin/labels?code=${label.code}`);
-  });
+  };
+
+  router.post('/labels/:id/void', labelAction(labels.voidLabel));
+  router.post('/labels/:id/restore', labelAction(labels.restoreLabel));
+  router.post('/labels/:id/unlock', labelAction(labels.unlockLabel));
 
   // ---------- 可疑標籤 ----------
 

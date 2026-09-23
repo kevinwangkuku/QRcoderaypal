@@ -14,6 +14,9 @@
   });
 })();
 
+// 測試卡頁的列印按鈕
+document.querySelector('[data-print]')?.addEventListener('click', () => window.print());
+
 // 產品表單的圖片欄：Ctrl+V 貼上、拖曳、過大時自動縮圖、圖片網址預覽
 (() => {
   const input = document.querySelector('input[type=file][name=image]');

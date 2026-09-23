@@ -65,6 +65,14 @@ function normalizeCode(input) {
   return CODE_RE.test(s) ? s : null;
 }
 
+// 後台查詢用：接受 16 碼變動碼，或整串 QR 網址（取最後一段）；找不到回傳 null
+function extractCode(input) {
+  if (typeof input !== 'string') return null;
+  const path = input.trim().split(/[?#]/)[0];
+  const last = path.split('/').filter(Boolean).pop() || '';
+  return normalizeCode(last.replace(/\s+/g, ''));
+}
+
 // 使用者輸入的 checkcode：轉大寫、去空白與連字號、O→0、I/L→1
 function normalizeCheckcode(input) {
   if (typeof input !== 'string') return '';
@@ -101,6 +109,7 @@ module.exports = {
   isQrAlphanumeric,
   normalizeProductId,
   normalizeCode,
+  extractCode,
   normalizeCheckcode,
   checkcodeMatches,
 };

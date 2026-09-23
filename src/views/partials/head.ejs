@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title><%= title %><%= locals.admin ? '｜防偽標籤後台' : '｜防偽驗證' %></title>
-  <link rel="stylesheet" href="/style.css">
-  <% if (locals.admin) { %><script src="/admin.js" defer></script><% } %>
+  <link rel="stylesheet" href="<%= asset['style.css'] %>">
+  <% if (locals.admin) { %><script src="<%= asset['admin.js'] %>" defer></script><% } %>
 </head>
 <body class="<%= locals.admin ? 'admin' : 'public' %>">
 <% if (locals.admin) { %>

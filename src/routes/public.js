@@ -25,10 +25,16 @@ function publicRouter({ config, db }) {
       title: '查無此標籤',
       message: '查無此標籤，可能為仿冒品。',
       tone: 'bad',
+      showContact: true,
     });
 
   const voidPage = (res) =>
-    res.status(410).render('message', { title: '標籤已作廢', message: '此標籤已作廢。', tone: 'bad' });
+    res.status(410).render('message', {
+      title: '標籤已作廢',
+      message: '此標籤已作廢。',
+      tone: 'bad',
+      showContact: true,
+    });
 
   const verifyLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -65,6 +71,7 @@ function publicRouter({ config, db }) {
           title: '已鎖定',
           message: '此標籤驗證失敗次數過多，已暫停驗證，請聯絡客服。',
           tone: 'bad',
+          showContact: true,
         });
       case 'fail':
         return res.status(400).render('scan', {

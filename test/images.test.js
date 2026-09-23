@@ -117,7 +117,8 @@ test('編輯產品：換圖刪舊檔、不填保留、勾選移除', async () =>
 test('後台載入 admin.js 且 CSP 只允許本站 script；消費者頁面不載入 script', async () => {
   const { app } = setup();
   const form = await request(app).get('/admin/products/new').set('Authorization', AUTH).expect(200);
-  assert.match(form.text, /<script src="\/admin\.js" defer><\/script>/);
+  assert.match(form.text, /<script src="\/admin\.js\?v=[0-9a-f]{10}" defer><\/script>/);
+  assert.match(form.text, /<link rel="stylesheet" href="\/style\.css\?v=[0-9a-f]{10}">/);
   assert.match(form.text, /data-image-zone/);
   assert.match(form.headers['content-security-policy'], /script-src 'self';/);
   await request(app).get('/admin.js').expect(200).expect('Content-Type', /javascript/);

@@ -3,25 +3,61 @@
   <h1>批次</h1>
   <a class="btn" href="/admin/batches/new">建立批次</a>
 </div>
+
+<% if (created) { %>
+<div class="created-banner">
+  <h2>✅ 批次 #<%= created.id %> 已建立</h2>
+  <p><span class="mono"><%= created.product_id %></span> <%= created.product_name %>，共 <%= created.quantity.toLocaleString() %> 張。
+     請下載 Excel 提供給條碼程式／印刷廠使用。</p>
+  <div class="actions">
+    <a class="btn" href="/admin/batches/<%= created.id %>/excel">⬇ 下載 Excel</a>
+    <a class="btn secondary" href="/admin/batches/<%= created.id %>/svg.zip">⬇ 下載 SVG ZIP</a>
+    <a class="btn secondary" href="/admin/batches/<%= created.id %>/cards">🖨 測試卡</a>
+  </div>
+  <% if (created.quantity > 10000) { %>
+  <p class="hint">數量較多，SVG ZIP 需要較長時間產生（10 萬張約 1 分半），下載開始後請耐心等候。</p>
+  <% } %>
+</div>
+<% } %>
 <table>
   <thead>
     <tr><th>#</th><th>產品</th><th>數量</th><th>建立時間</th><th>已掃描</th><th>已驗證</th><th>備註</th><th>狀態</th><th></th></tr>
   </thead>
   <tbody>
   <% for (const b of batches) { %>
-    <tr class="<%= b.status === 'void' ? 'void' : '' %>">
+    <% const voided = b.status === 'void'; %>
+    <tr class="<%= voided ? 'void' : '' %> <%= created && created.id === b.id ? 'highlight' : '' %>">
       <td><%= b.id %></td>
       <td><span class="mono"><%= b.product_id %></span> <%= b.product_name %></td>
       <td class="num"><%= b.quantity.toLocaleString() %></td>
       <td><%= fmt(b.created_at) %></td>
       <td class="num"><%= b.scanned.toLocaleString() %></td>
       <td class="num"><%= b.verified.toLocaleString() %></td>
-      <td><%= b.note || '' %></td>
-      <td><%= b.status === 'void' ? '已作廢' : '啟用' %></td>
+      <td class="note">
+        <span><%= b.note || '' %></span>
+        <details class="inline-edit">
+          <summary>編輯</summary>
+          <form method="post" action="/admin/batches/<%= b.id %>/note">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input name="note" value="<%= b.note || '' %>" maxlength="500" placeholder="備註">
+            <button type="submit">儲存</button>
+          </form>
+        </details>
+      </td>
+      <td><%= voided ? '已作廢' : '啟用' %></td>
       <td class="actions">
-        <a href="/admin/batches/<%= b.id %>/excel">Excel</a>
-        <a href="/admin/batches/<%= b.id %>/svg.zip">SVG ZIP</a>
-        <% if (b.status !== 'void') { %>
+        <a class="btn-sm" href="/admin/batches/<%= b.id %>/excel">⬇ Excel</a>
+        <a class="btn-sm" href="/admin/batches/<%= b.id %>/svg.zip">⬇ SVG ZIP</a>
+        <a class="btn-sm" href="/admin/batches/<%= b.id %>/cards">🖨 測試卡</a>
+        <% if (voided) { %>
+        <details class="confirm restore">
+          <summary>恢復啟用</summary>
+          <form method="post" action="/admin/batches/<%= b.id %>/restore">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit">確定恢復整個批次</button>
+          </form>
+        </details>
+        <% } else { %>
         <details class="confirm">
           <summary>作廢</summary>
           <form method="post" action="/admin/batches/<%= b.id %>/void">

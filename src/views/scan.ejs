@@ -1,4 +1,13 @@
 <%- include('partials/head', { title: product.name }) %>
+<% if (label && label.scan_count > 1) { %>
+<div class="card result warn repeat-scan">
+  <h1>⚠️ 此防偽碼已被查詢過</h1>
+  <p>這是第 <strong><%= label.scan_count %></strong> 次查詢，首次查詢時間為 <strong><%= fmt(label.first_scan_at) %></strong>。</p>
+  <p>如果之前是您本人查詢，可以忽略此提醒。<br>
+     如果您是<strong>第一次</strong>掃描這件商品，它可能使用了被複製的標籤。</p>
+  <%- include('partials/contact') %>
+</div>
+<% } %>
 <div class="card">
   <% if (product.image_url) { %>
   <img class="product-img" src="<%= product.image_url %>" alt="<%= product.name %>">
