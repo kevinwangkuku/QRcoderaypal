@@ -1,0 +1,24 @@
+<%- include('../partials/head', { title: '產品' }) %>
+<div class="bar">
+  <h1>產品</h1>
+  <a class="btn" href="/admin/products/new">新增產品</a>
+</div>
+<table>
+  <thead><tr><th>圖片</th><th>產品碼</th><th>名稱</th><th>建立時間</th><th></th></tr></thead>
+  <tbody>
+  <% for (const p of products) { %>
+    <tr>
+      <td><% if (p.image_url) { %><img class="thumb" src="<%= p.image_url %>" alt=""><% } %></td>
+      <td class="mono"><%= p.id %></td>
+      <td><%= p.name %></td>
+      <td><%= fmt(p.created_at) %></td>
+      <td class="actions">
+        <a href="/admin/products/<%= p.id %>/edit">編輯</a>
+        <a href="/admin/batches/new?product=<%= p.id %>">建立批次</a>
+      </td>
+    </tr>
+  <% } %>
+  <% if (!products.length) { %><tr><td colspan="5" class="empty">尚無產品</td></tr><% } %>
+  </tbody>
+</table>
+<%- include('../partials/foot') %>

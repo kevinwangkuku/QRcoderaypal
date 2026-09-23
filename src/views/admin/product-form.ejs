@@ -1,0 +1,44 @@
+<%- include('../partials/head', { title: product ? '編輯產品' : '新增產品' }) %>
+<h1><%= product ? '編輯產品' : '新增產品' %></h1>
+<% if (errors.length) { %>
+<ul class="error"><% for (const e of errors) { %><li><%= e %></li><% } %></ul>
+<% } %>
+<form class="form" method="post" enctype="multipart/form-data"
+      action="<%= product ? `/admin/products/${product.id}` : '/admin/products' %>">
+  <%# _csrf 放第一個欄位：上傳失敗時也能先讀到它 %>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <label>產品碼（6 碼英數，建立後不可修改）
+    <% if (product) { %>
+    <input value="<%= product.id %>" disabled class="mono">
+    <% } else { %>
+    <input name="id" value="<%= form.id || '' %>" required maxlength="6" pattern="[0-9A-Za-z]{6}" class="mono">
+    <% } %>
+  </label>
+  <label>名稱
+    <input name="name" value="<%= form.name || '' %>" required maxlength="200">
+  </label>
+  <label>說明
+    <textarea name="description" rows="4" maxlength="5000"><%= form.description || '' %></textarea>
+  </label>
+  <fieldset class="image-field">
+    <legend>產品圖片</legend>
+    <% if (product && product.image_url) { %>
+    <div class="current-image">
+      <img src="<%= product.image_url %>" alt="目前的圖片">
+      <label class="check"><input type="checkbox" name="remove_image" value="1"> 移除圖片</label>
+    </div>
+    <% } %>
+    <label>上傳圖片檔（JPG、PNG、WebP、GIF，最大 2 MB）
+      <input name="image" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+    </label>
+    <label>或貼上圖片網址
+      <input name="image_url" value="<%= form.imageUrl || '' %>" type="url" placeholder="https://">
+    </label>
+    <p class="hint">兩者都填時以上傳的檔案為準。<% if (product && product.image_url) { %>都不填則保留目前的圖片。<% } %></p>
+  </fieldset>
+  <div class="actions">
+    <button type="submit">儲存</button>
+    <a href="/admin/products">取消</a>
+  </div>
+</form>
+<%- include('../partials/foot') %>

@@ -1,0 +1,39 @@
+<%- include('../partials/head', { title: '批次' }) %>
+<div class="bar">
+  <h1>批次</h1>
+  <a class="btn" href="/admin/batches/new">建立批次</a>
+</div>
+<table>
+  <thead>
+    <tr><th>#</th><th>產品</th><th>數量</th><th>建立時間</th><th>已掃描</th><th>已驗證</th><th>備註</th><th>狀態</th><th></th></tr>
+  </thead>
+  <tbody>
+  <% for (const b of batches) { %>
+    <tr class="<%= b.status === 'void' ? 'void' : '' %>">
+      <td><%= b.id %></td>
+      <td><span class="mono"><%= b.product_id %></span> <%= b.product_name %></td>
+      <td class="num"><%= b.quantity.toLocaleString() %></td>
+      <td><%= fmt(b.created_at) %></td>
+      <td class="num"><%= b.scanned.toLocaleString() %></td>
+      <td class="num"><%= b.verified.toLocaleString() %></td>
+      <td><%= b.note || '' %></td>
+      <td><%= b.status === 'void' ? '已作廢' : '啟用' %></td>
+      <td class="actions">
+        <a href="/admin/batches/<%= b.id %>/excel">Excel</a>
+        <a href="/admin/batches/<%= b.id %>/svg.zip">SVG ZIP</a>
+        <% if (b.status !== 'void') { %>
+        <details class="confirm">
+          <summary>作廢</summary>
+          <form method="post" action="/admin/batches/<%= b.id %>/void">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="danger">確定作廢整個批次</button>
+          </form>
+        </details>
+        <% } %>
+      </td>
+    </tr>
+  <% } %>
+  <% if (!batches.length) { %><tr><td colspan="9" class="empty">尚無批次</td></tr><% } %>
+  </tbody>
+</table>
+<%- include('../partials/foot') %>

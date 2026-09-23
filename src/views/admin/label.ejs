@@ -1,0 +1,55 @@
+<%- include('../partials/head', { title: '標籤查詢' }) %>
+<h1>標籤查詢</h1>
+<form class="search" method="get" action="/admin/labels">
+  <input name="code" value="<%= query %>" placeholder="輸入 16 碼變動碼" maxlength="40" class="mono" required>
+  <button type="submit">查詢</button>
+</form>
+
+<% if (query && !label) { %>
+<p class="error">查無此變動碼。</p>
+<% } %>
+
+<% if (label) { %>
+<% const voided = label.status === 'void' || label.batch_status === 'void'; %>
+<dl class="kv">
+  <dt>產品</dt><dd><span class="mono"><%= label.product_id %></span> <%= label.product_name %></dd>
+  <dt>批次 / 流水號</dt><dd>#<%= label.batch_id %> / <%= label.sn %></dd>
+  <dt>qrcodedata</dt><dd class="mono"><%= qrData %></dd>
+  <dt>狀態</dt>
+  <dd>
+    <% if (label.status === 'void') { %>標籤已作廢
+    <% } else if (label.batch_status === 'void') { %>批次已作廢
+    <% } else { %>啟用<% } %>
+  </dd>
+  <dt>掃描</dt><dd><%= label.scan_count %> 次，首次 <%= fmt(label.first_scan_at) || '—' %></dd>
+  <dt>驗證成功</dt><dd><%= label.verify_count %> 次，首次 <%= fmt(label.first_verify_at) || '—' %></dd>
+  <dt>驗證失敗</dt><dd><%= label.fail_count %> 次</dd>
+</dl>
+<% if (!voided) { %>
+<details class="confirm">
+  <summary>作廢此標籤</summary>
+  <form method="post" action="/admin/labels/<%= label.id %>/void">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button type="submit" class="danger">確定作廢</button>
+  </form>
+</details>
+<% } %>
+
+<h2>事件紀錄（<%= events.length %>）</h2>
+<table>
+  <thead><tr><th>時間</th><th>類型</th><th>IP 雜湊</th><th>User-Agent</th></tr></thead>
+  <tbody>
+  <% const typeNames = { scan: '掃描', verify_ok: '驗證成功', verify_fail: '驗證失敗', not_found: '產品碼不符' }; %>
+  <% for (const e of events) { %>
+    <tr>
+      <td><%= fmt(e.created_at) %></td>
+      <td><%= typeNames[e.type] || e.type %></td>
+      <td class="mono" title="<%= e.ip_hash || '' %>"><%= (e.ip_hash || '').slice(0, 12) %></td>
+      <td class="ua"><%= e.user_agent || '' %></td>
+    </tr>
+  <% } %>
+  <% if (!events.length) { %><tr><td colspan="4" class="empty">尚無紀錄</td></tr><% } %>
+  </tbody>
+</table>
+<% } %>
+<%- include('../partials/foot') %>

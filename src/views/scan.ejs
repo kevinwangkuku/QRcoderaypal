@@ -1,0 +1,29 @@
+<%- include('partials/head', { title: product.name }) %>
+<div class="card">
+  <% if (product.image_url) { %>
+  <img class="product-img" src="<%= product.image_url %>" alt="<%= product.name %>">
+  <% } %>
+  <h1><%= product.name %></h1>
+  <% if (product.description) { %>
+  <p class="desc"><%= product.description %></p>
+  <% } %>
+
+  <% if (label) { %>
+  <dl class="stats">
+    <div><dt>此碼查詢次數</dt><dd><%= label.scan_count %> 次</dd></div>
+    <div><dt>首次查詢時間</dt><dd><%= fmt(label.first_scan_at) %></dd></div>
+  </dl>
+  <% } %>
+</div>
+
+<form class="card verify" method="post" action="/verify">
+  <input type="hidden" name="product" value="<%= productId %>">
+  <input type="hidden" name="code" value="<%= code %>">
+  <label for="checkcode">請輸入標籤上的驗證碼</label>
+  <p class="hint">驗證碼位於刮刮層下方或包裝內側，共 6 碼。</p>
+  <% if (error) { %><p class="error"><%= error %></p><% } %>
+  <input id="checkcode" name="checkcode" inputmode="text" autocomplete="off" autocapitalize="characters"
+         spellcheck="false" maxlength="12" required placeholder="例：7K3M9Q">
+  <button type="submit">驗證</button>
+</form>
+<%- include('partials/foot') %>
