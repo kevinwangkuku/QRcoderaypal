@@ -47,6 +47,7 @@ function loadConfig(env = process.env) {
   }
 
   if (!env.ADMIN_USER) throw new Error('ADMIN_USER 未設定');
+  if (env.ADMIN_USER === 'logout') throw new Error('ADMIN_USER 不可使用 logout（保留給登出功能）');
 
   return {
     port: parseIntIn('PORT', env.PORT, 3000, 1, 65535),

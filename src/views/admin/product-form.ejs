@@ -20,8 +20,13 @@
   <label>說明
     <textarea name="description" rows="4" maxlength="5000"><%= form.description || '' %></textarea>
   </label>
-  <fieldset class="image-field">
+  <fieldset class="image-field" data-image-zone>
     <legend>產品圖片</legend>
+    <p class="paste-tip">💡 可以直接按 <kbd>Ctrl</kbd>+<kbd>V</kbd> 貼上複製的圖片或截圖，也可以把圖片檔拖曳到這個框裡</p>
+    <div class="new-image">
+      <img data-image-preview hidden alt="新圖片預覽">
+      <p class="hint" data-image-status></p>
+    </div>
     <% if (product && product.image_url) { %>
     <div class="current-image">
       <img src="<%= product.image_url %>" alt="目前的圖片">
@@ -32,8 +37,9 @@
       <input name="image" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
     </label>
     <label>或貼上圖片網址
-      <input name="image_url" value="<%= form.imageUrl || '' %>" type="url" placeholder="https://">
+      <input name="image_url" value="<%= form.imageUrl || '' %>" type="url" placeholder="https://…/圖片.jpg">
     </label>
+    <p class="hint" data-url-status></p>
     <p class="hint">兩者都填時以上傳的檔案為準。<% if (product && product.image_url) { %>都不填則保留目前的圖片。<% } %></p>
   </fieldset>
   <div class="actions">

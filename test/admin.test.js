@@ -16,6 +16,31 @@ test('後台需要 Basic Auth', async () => {
   await request(app).get('/admin/products').set('Authorization', AUTH).expect(200);
 });
 
+test('登出：側邊欄有登出按鈕，/admin/logout 只接受假帳號 logout', async () => {
+  const { app } = setup();
+  const page = await request(app).get('/admin/products').set('Authorization', AUTH).expect(200);
+  assert.match(page.text, /data-logout/);
+  assert.match(page.text, /👤 admin/);
+
+  const fake = 'Basic ' + Buffer.from('logout:logout').toString('base64');
+  await request(app).get('/admin/logout').set('Authorization', fake).expect(200);
+  // 真帳號或沒帶帳號都回 401，讓瀏覽器改用前端提供的假帳號
+  const res = await request(app).get('/admin/logout').set('Authorization', AUTH).expect(401);
+  assert.match(res.headers['www-authenticate'], /realm="admin"/);
+  await request(app).get('/admin/logout').expect(401);
+  // 假帳號不能進後台
+  await request(app).get('/admin/products').set('Authorization', fake).expect(401);
+
+  const out = await request(app).get('/logged-out').expect(200);
+  assert.match(out.text, /已登出/);
+});
+
+test('ADMIN_USER 不可使用保留名稱 logout', () => {
+  const { loadConfig } = require('../src/config');
+  const { TEST_ENV } = require('./helpers');
+  assert.throws(() => loadConfig({ ...TEST_ENV, ADMIN_USER: 'logout' }), /logout/);
+});
+
 test('ADMIN_REQUIRE_HTTPS=true 時 HTTP 請求被拒，經反向代理的 HTTPS 可用', async () => {
   const { app } = setup({ ADMIN_REQUIRE_HTTPS: 'true' });
   await request(app).get('/admin/products').set('Authorization', AUTH).expect(403);
@@ -115,6 +140,7 @@ test('標籤查詢與單張作廢', async () => {
     .set('Authorization', AUTH)
     .expect(200);
   assert.match(page.text, /掃描<\/td>/);
+  assert.match(page.text, /(127\.0\.0\.1|::1)/, '事件紀錄要顯示實際 IP');
 
   await request(app)
     .post(`/admin/labels/${label.id}/void`)

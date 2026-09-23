@@ -37,14 +37,17 @@
 
 <h2>事件紀錄（<%= events.length %>）</h2>
 <table>
-  <thead><tr><th>時間</th><th>類型</th><th>IP 雜湊</th><th>User-Agent</th></tr></thead>
+  <thead><tr><th>時間</th><th>類型</th><th>IP</th><th>User-Agent</th></tr></thead>
   <tbody>
   <% const typeNames = { scan: '掃描', verify_ok: '驗證成功', verify_fail: '驗證失敗', not_found: '產品碼不符' }; %>
   <% for (const e of events) { %>
     <tr>
       <td><%= fmt(e.created_at) %></td>
       <td><%= typeNames[e.type] || e.type %></td>
-      <td class="mono" title="<%= e.ip_hash || '' %>"><%= (e.ip_hash || '').slice(0, 12) %></td>
+      <td class="mono" title="雜湊 <%= e.ip_hash || '' %>">
+        <% if (e.ip) { %><%= e.ip %>
+        <% } else if (e.ip_hash) { %><span class="hint">僅有雜湊 <%= e.ip_hash.slice(0, 12) %></span><% } %>
+      </td>
       <td class="ua"><%= e.user_agent || '' %></td>
     </tr>
   <% } %>

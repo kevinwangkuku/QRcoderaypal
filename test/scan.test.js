@@ -25,6 +25,22 @@ test('掃描正確碼：顯示產品與查詢次數，scan_count +1 並記錄 sc
   const scans = eventsOf(db, 'scan');
   assert.equal(scans.length, 2);
   assert.match(scans[0].ip_hash, /^[0-9a-f]{64}$/);
+  assert.match(scans[0].ip, /^(127\.0\.0\.1|::1)$/);
+  assert.match(res.text, /會記錄查詢時的 IP 位址/);
+});
+
+test('經反向代理時記錄 X-Forwarded-For 的實際 IP', async () => {
+  const { app, db } = setup();
+  const { label } = seedLabel(db);
+  await request(app).get(`/A12B3C/${label.code}`).set('X-Forwarded-For', '203.0.113.7').expect(200);
+  assert.equal(eventsOf(db, 'scan')[0].ip, '203.0.113.7');
+});
+
+test('IPv4-mapped IPv6 轉成一般寫法', () => {
+  const { normalizeIp } = require('../src/lib/ip');
+  assert.equal(normalizeIp('::ffff:203.0.113.7'), '203.0.113.7');
+  assert.equal(normalizeIp('2001:db8::1'), '2001:db8::1');
+  assert.equal(normalizeIp(undefined), null);
 });
 
 test('掃描錯誤碼：顯示查無此標籤並記錄 not_found', async () => {

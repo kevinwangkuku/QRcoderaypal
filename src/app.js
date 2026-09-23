@@ -13,7 +13,8 @@ function securityHeaders(req, res, next) {
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'no-referrer',
     'Content-Security-Policy':
-      "default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'none'; form-action 'self'; frame-ancestors 'none'",
+      // script 只允許本站檔案（後台的 admin.js）；blob: 用於貼上圖片後的預覽
+      "default-src 'self'; img-src 'self' https: data: blob:; style-src 'self'; script-src 'self'; form-action 'self'; frame-ancestors 'none'",
   });
   next();
 }
@@ -36,6 +37,8 @@ function createApp({ config, db }) {
 
   // 順序重要：/admin、/verify 必須排在 /:product/:code 前面
   app.use('/admin', adminRouter({ config, db }));
+  // 放在 /admin 之外：若在 /admin 底下，瀏覽器會帶著登出用的假帳號而立刻跳出登入視窗
+  app.get('/logged-out', (req, res) => res.render('logged-out'));
   app.use('/', publicRouter({ config, db }));
 
   app.use((req, res) => {

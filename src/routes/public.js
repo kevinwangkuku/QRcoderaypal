@@ -3,13 +3,14 @@
 const express = require('express');
 const { rateLimit } = require('express-rate-limit');
 const codes = require('../lib/codes');
-const { hashIp } = require('../lib/ip');
+const { hashIp, normalizeIp } = require('../lib/ip');
 const labels = require('../services/labels');
 
 function publicRouter({ config, db }) {
   const router = express.Router();
 
   const meta = (req) => ({
+    ip: normalizeIp(req.ip),
     ipHash: hashIp(req.ip, config.ipHashSalt),
     userAgent: req.get('user-agent'),
   });

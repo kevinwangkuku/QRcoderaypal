@@ -114,6 +114,18 @@ test('編輯產品：換圖刪舊檔、不填保留、勾選移除', async () =>
   assert.deepEqual(fs.readdirSync(config.uploadDir), []);
 });
 
+test('後台載入 admin.js 且 CSP 只允許本站 script；消費者頁面不載入 script', async () => {
+  const { app } = setup();
+  const form = await request(app).get('/admin/products/new').set('Authorization', AUTH).expect(200);
+  assert.match(form.text, /<script src="\/admin\.js" defer><\/script>/);
+  assert.match(form.text, /data-image-zone/);
+  assert.match(form.headers['content-security-policy'], /script-src 'self';/);
+  await request(app).get('/admin.js').expect(200).expect('Content-Type', /javascript/);
+
+  const page = await request(app).get('/A12B3C/0000000000000000');
+  assert.doesNotMatch(page.text, /<script/);
+});
+
 test('仍可使用外部圖片網址', async () => {
   const { app, db } = setup();
   const _csrf = await newForm(app);

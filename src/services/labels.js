@@ -146,8 +146,15 @@ function isVoid(label) {
 
 function logEvent(db, labelId, type, meta) {
   db.prepare(
-    'INSERT INTO events (label_id, type, ip_hash, user_agent, created_at) VALUES (?, ?, ?, ?, ?)',
-  ).run(labelId, type, meta.ipHash || null, (meta.userAgent || '').slice(0, 512) || null, nowIso());
+    'INSERT INTO events (label_id, type, ip, ip_hash, user_agent, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+  ).run(
+    labelId,
+    type,
+    meta.ip || null,
+    meta.ipHash || null,
+    (meta.userAgent || '').slice(0, 512) || null,
+    nowIso(),
+  );
 }
 
 // 找標籤並確認產品碼相符；變動碼存在但產品碼不符時視同查無此碼

@@ -6,6 +6,7 @@
   <meta name="robots" content="noindex">
   <title><%= title %><%= locals.admin ? '｜防偽標籤後台' : '｜防偽驗證' %></title>
   <link rel="stylesheet" href="/style.css">
+  <% if (locals.admin) { %><script src="/admin.js" defer></script><% } %>
 </head>
 <body class="<%= locals.admin ? 'admin' : 'public' %>">
 <% if (locals.admin) { %>
@@ -15,6 +16,10 @@
   <a href="/admin/batches" class="<%= nav === 'batches' ? 'on' : '' %>">批次</a>
   <a href="/admin/labels" class="<%= nav === 'labels' ? 'on' : '' %>">標籤查詢</a>
   <a href="/admin/suspicious" class="<%= nav === 'suspicious' ? 'on' : '' %>">可疑標籤</a>
+  <div class="nav-user">
+    <span class="nav-user-name">👤 <%= adminUser %></span>
+    <button type="button" class="logout" data-logout>登出</button>
+  </div>
 </nav>
 <% } %>
 <main class="main">

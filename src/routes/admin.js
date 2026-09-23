@@ -46,6 +46,9 @@ function basicAuth(config) {
 // 只有產品表單可以延後檢查；其他路由送 multipart 一律照常驗證（讀不到 token 就拒絕）。
 const MULTIPART_PATHS = /^\/products(\/[^/]+)?$/;
 
+// 登出用的假帳號；設定檢查會禁止 ADMIN_USER 使用這個名稱
+const LOGOUT_USER = 'logout';
+
 function csrf() {
   const token = crypto.randomBytes(24).toString('hex');
   const expected = Buffer.from(token);
@@ -117,10 +120,24 @@ function adminRouter({ config, db }) {
   const router = express.Router();
   const csrfGuard = csrf();
   const productForm = [imageUpload(), csrfGuard.verify];
-  router.use(requireHttps(config), basicAuth(config), csrfGuard.middleware);
+  router.use(requireHttps(config));
+
+  // Basic Auth 沒有標準登出：前端用假帳號 logout 請求這裡，伺服器回 200，
+  // 瀏覽器就會以假帳號覆蓋記住的真帳號，之後進後台需重新登入。
+  router.get('/logout', (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const [scheme, encoded] = (req.get('authorization') || '').split(' ');
+    const user = scheme === 'Basic' && encoded ? Buffer.from(encoded, 'base64').toString('utf8').split(':')[0] : '';
+    if (user === LOGOUT_USER) return res.send('ok');
+    res.set('WWW-Authenticate', 'Basic realm="admin", charset="UTF-8"');
+    res.status(401).send('');
+  });
+
+  router.use(basicAuth(config), csrfGuard.middleware);
   router.use((req, res, next) => {
     res.set('Cache-Control', 'no-store');
     res.locals.admin = true;
+    res.locals.adminUser = config.adminUser;
     res.locals.nav = req.path.split('/')[1] || '';
     next();
   });
