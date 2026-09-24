@@ -7,6 +7,12 @@
      如果您是<strong>第一次</strong>掃描這件商品，它可能使用了被複製的標籤。</p>
   <%- include('partials/contact') %>
 </div>
+<% } else if (label && !checkcodeEnabled) { %>
+<%# 不使用驗證碼時，首次查詢就是正品判定 %>
+<div class="card result good">
+  <h1>✅ 正品查詢成功</h1>
+  <p>此防偽碼為第一次被查詢，查詢時間 <%= fmt(label.first_scan_at) %>。</p>
+</div>
 <% } %>
 <div class="card">
   <% if (product.image_url) { %>
@@ -25,6 +31,7 @@
   <% } %>
 </div>
 
+<% if (checkcodeEnabled) { %>
 <form class="card verify" method="post" action="/verify">
   <input type="hidden" name="product" value="<%= productId %>">
   <input type="hidden" name="code" value="<%= code %>">
@@ -35,5 +42,6 @@
          spellcheck="false" maxlength="12" required placeholder="例：7K3M9Q">
   <button type="submit">驗證</button>
 </form>
+<% } %>
 <p class="privacy">為防止仿冒，本系統會記錄查詢時的 IP 位址、裝置資訊與時間，僅用於標籤真偽查核。</p>
 <%- include('partials/foot') %>

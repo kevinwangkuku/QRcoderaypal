@@ -38,6 +38,7 @@ function createApp({ config, db }) {
 
   app.locals.fmt = (iso) => formatTime(iso, config.tz);
   app.locals.contact = config.contact;
+  app.locals.checkcodeEnabled = config.checkcodeEnabled;
   // CSS / JS 網址加上內容雜湊（?v=…），檔案一改網址就變，瀏覽器不會拿到快取的舊版
   app.locals.asset = assetUrls(path.join(__dirname, 'public'), ['style.css', 'admin.js']);
 

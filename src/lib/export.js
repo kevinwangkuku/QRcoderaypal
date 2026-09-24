@@ -7,8 +7,9 @@ const { toSvg } = require('./qr');
 
 const TEXT = { numFmt: '@' };
 
-// 串流寫出 Excel：工作表 labels，欄位 sn / id / qrcodedata / checkcode，全部是文字格式
-async function writeExcel(stream, labels, { baseUrl }) {
+// 串流寫出 Excel：工作表 labels，欄位 sn / id / qrcodedata / checkcode，全部是文字格式。
+// includeCheckcode 為 false（不使用驗證碼）時省略 checkcode 欄。
+async function writeExcel(stream, labels, { baseUrl, includeCheckcode = true }) {
   const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
     stream,
     useStyles: true,
@@ -19,15 +20,12 @@ async function writeExcel(stream, labels, { baseUrl }) {
     { header: 'sn', key: 'sn', width: 8, style: TEXT },
     { header: 'id', key: 'id', width: 10, style: TEXT },
     { header: 'qrcodedata', key: 'qrcodedata', width: 44, style: TEXT },
-    { header: 'checkcode', key: 'checkcode', width: 12, style: TEXT },
+    ...(includeCheckcode ? [{ header: 'checkcode', key: 'checkcode', width: 12, style: TEXT }] : []),
   ];
   for (const l of labels) {
-    const row = sheet.addRow([
-      String(l.sn),
-      l.product_id,
-      buildQrData(baseUrl, l.product_id, l.code),
-      l.checkcode,
-    ]);
+    const values = [String(l.sn), l.product_id, buildQrData(baseUrl, l.product_id, l.code)];
+    if (includeCheckcode) values.push(l.checkcode);
+    const row = sheet.addRow(values);
     row.eachCell((cell) => {
       cell.numFmt = '@';
     });

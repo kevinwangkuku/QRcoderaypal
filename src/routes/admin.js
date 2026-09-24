@@ -272,7 +272,10 @@ function adminRouter({ config, db }) {
     const filename = `${batch.product_id}_batch${batch.id}_${dateStamp(new Date(), config.tz)}.xlsx`;
     res.attachment(filename);
     try {
-      await writeExcel(res, labels.iterateBatchLabels(db, batch.id), { baseUrl: config.baseUrl });
+      await writeExcel(res, labels.iterateBatchLabels(db, batch.id), {
+        baseUrl: config.baseUrl,
+        includeCheckcode: config.checkcodeEnabled,
+      });
     } catch (err) {
       next(err);
     }

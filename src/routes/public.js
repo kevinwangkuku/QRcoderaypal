@@ -49,6 +49,7 @@ function publicRouter({ config, db }) {
       }),
   });
 
+  router.post('/verify', noStore, (req, res, next) => (config.checkcodeEnabled ? next() : next('router')));
   router.post('/verify', noStore, verifyLimiter, (req, res) => {
     const productId = codes.normalizeProductId(req.body.product);
     const code = codes.normalizeCode(req.body.code);

@@ -63,6 +63,8 @@ function loadConfig(env = process.env) {
     adminUser: env.ADMIN_USER,
     adminPass: requireSecret('ADMIN_PASS', env.ADMIN_PASS, 12),
     adminRequireHttps: env.ADMIN_REQUIRE_HTTPS !== 'false',
+    // false：不使用驗證碼，只以「是否首次查詢」判斷；驗證碼仍會產生並匯出，隨時可再開啟
+    checkcodeEnabled: env.CHECKCODE_ENABLED !== 'false',
     ipHashSalt: requireSecret('IP_HASH_SALT', env.IP_HASH_SALT, 16),
     trustProxy: parseTrustProxy(env.TRUST_PROXY),
     qrEcLevel: ecLevel,

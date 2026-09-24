@@ -11,7 +11,7 @@
     <button type="submit">更新</button>
     <button type="button" data-print>🖨 列印</button>
   </form>
-  <p class="hint">一次最多 <%= maxCards %> 張，A4 每頁 15 張。卡片上同時印有驗證碼，<strong>僅供內部測試</strong>，請勿用於正式商品。</p>
+  <p class="hint">一次最多 <%= maxCards %> 張，A4 每頁 15 張。<% if (checkcodeEnabled) { %>卡片上同時印有驗證碼，<strong>僅供內部測試</strong>，請勿用於正式商品。<% } %></p>
 </div>
 
 <div class="cards">
@@ -21,7 +21,7 @@
     <div class="qr test-card-qr"><%- c.svg %></div>
     <div class="test-card-meta">
       <span>No. <%= c.sn %></span>
-      <span>驗證碼 <strong class="mono"><%= c.checkcode %></strong></span>
+      <% if (checkcodeEnabled) { %><span>驗證碼 <strong class="mono"><%= c.checkcode %></strong></span><% } %>
     </div>
   </div>
   <% } %>
