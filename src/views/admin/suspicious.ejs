@@ -1,0 +1,29 @@
+<%- include('../partials/head', { title: '可疑標籤' }) %>
+<h1>可疑標籤</h1>
+<form class="search" method="get" action="/admin/suspicious">
+  <label>掃描次數 ≥ <input name="min_scans" type="number" min="1" value="<%= minScans %>"></label>
+  <label>或驗證成功次數 ≥ <input name="min_verifies" type="number" min="1" value="<%= minVerifies %>"></label>
+  <button type="submit">套用</button>
+</form>
+<p class="hint">依驗證次數、掃描次數排序，最多顯示 200 筆。</p>
+<table>
+  <thead>
+    <tr><th>變動碼</th><th>產品</th><th>批次 / 流水號</th><th>掃描</th><th>驗證成功</th><th>驗證失敗</th><th>首次掃描</th><th>狀態</th></tr>
+  </thead>
+  <tbody>
+  <% for (const l of rows) { %>
+    <tr class="<%= l.status === 'void' || l.batch_status === 'void' ? 'void' : '' %>">
+      <td class="mono"><a href="/admin/labels?code=<%= l.code %>"><%= l.code %></a></td>
+      <td><span class="mono"><%= l.product_id %></span> <%= l.product_name %></td>
+      <td>#<%= l.batch_id %> / <%= l.sn %></td>
+      <td class="num"><%= l.scan_count %></td>
+      <td class="num"><%= l.verify_count %></td>
+      <td class="num"><%= l.fail_count %></td>
+      <td><%= fmt(l.first_scan_at) %></td>
+      <td><%= l.status === 'void' || l.batch_status === 'void' ? '已作廢' : '啟用' %></td>
+    </tr>
+  <% } %>
+  <% if (!rows.length) { %><tr><td colspan="8" class="empty">沒有符合門檻的標籤</td></tr><% } %>
+  </tbody>
+</table>
+<%- include('../partials/foot') %>

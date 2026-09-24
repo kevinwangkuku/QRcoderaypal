@@ -1,0 +1,12 @@
+<% const c = contact; %>
+<div class="contact">
+  <p class="contact-title">請聯繫<%= c.name ? ` ${c.name} ` : '我們' %>協助確認</p>
+  <% if (c.phone || c.email || c.url) { %>
+  <div class="contact-links">
+    <% if (c.phone) { %><a class="btn contact-btn" href="tel:<%= c.phone.replace(/[^\d+]/g, '') %>">📞 <%= c.phone %></a><% } %>
+    <% if (c.url) { %><a class="btn contact-btn" href="<%= c.url %>" target="_blank" rel="noopener"><%= c.urlLabel %></a><% } %>
+    <% if (c.email) { %><a class="btn contact-btn secondary" href="mailto:<%= c.email %>">✉️ <%= c.email %></a><% } %>
+  </div>
+  <% } %>
+  <p class="hint">聯繫時請提供標籤上的 QR 網址或拍下標籤照片，以及購買地點與日期。</p>
+</div>

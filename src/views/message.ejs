@@ -1,0 +1,7 @@
+<%- include('partials/head', { title }) %>
+<div class="card result <%= tone %>">
+  <h1><%= title %></h1>
+  <p><%= message %></p>
+  <% if (locals.showContact) { %><%- include('partials/contact') %><% } %>
+</div>
+<%- include('partials/foot') %>
