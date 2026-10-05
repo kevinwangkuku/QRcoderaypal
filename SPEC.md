@@ -110,7 +110,8 @@ events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   label_id INTEGER REFERENCES labels(id),  -- 查無此碼時為 NULL
   type TEXT NOT NULL,                      -- scan / verify_ok / verify_fail / not_found
-  ip_hash TEXT,                            -- IP 做 SHA-256 加鹽雜湊，不存明碼
+  ip TEXT,                                 -- 實際 IP（2026-09-23 起保存，見第 12 節）
+  ip_hash TEXT,                            -- IP 做 SHA-256 加鹽雜湊，供新舊紀錄比對
   user_agent TEXT,
   created_at TEXT NOT NULL
 )
@@ -209,3 +210,18 @@ test/
 - 前面架 Caddy 或 nginx 提供 HTTPS，Express 設定 `trust proxy`。
 - SQLite 檔案每日備份的做法。
 - 上線前以 iOS 與 Android 原生相機實際掃描印刷後的 7 mm 標籤。
+
+## 12. 規格變更紀錄
+
+### 2026-09-23
+
+- **保存實際 IP**：原規格「IP 只存雜湊、不存明碼」改為同時保存實際 IP（`events.ip`），雜湊保留供新舊紀錄比對；變更前的紀錄只有雜湊。驗證頁加上隱私告知，文字待法務確認。IP 暫不設保存期限。
+- **產品圖片可上傳**：除圖片網址外，後台可上傳 JPG / PNG / WebP / GIF（最大 2 MB，依檔頭驗證格式，不接受 SVG），也可 Ctrl+V 貼上或拖曳。圖片存於 `UPLOAD_DIR`，需與資料庫一起備份。
+- **後台登出**：側邊欄提供登出按鈕（以假帳號覆蓋瀏覽器記住的 Basic Auth 帳密）。`ADMIN_USER` 不可為 `logout`。
+- **新增設定**：`IP_HASH_SALT`（IP 雜湊的鹽）、`ADMIN_REQUIRE_HTTPS`（本機開發可關閉 HTTPS 限制）、`TRUST_PROXY`、`UPLOAD_DIR`。
+- **後台 CSRF 防護**：所有後台 POST 需帶表單 token。
+
+### 2026-09-24
+
+- **停用驗證碼（客戶決定）**：新增 `CHECKCODE_ENABLED`，目前設為 `false`。消費者不需輸入驗證碼：首次查詢顯示「✅ 正品查詢成功」，第二次起顯示「⚠️ 此防偽碼已被查詢過」與聯絡方式。`POST /verify` 停用，Excel 只輸出 `sn`、`id`、`qrcodedata`，測試卡不印驗證碼。驗證碼仍會產生並存在資料庫，改回 `true` 即恢復第 6 節的驗證流程。
+  - 風險：真偽僅以「是否首次查詢」判斷。仿冒者複製 QR 碼後，第一位掃描的消費者仍會看到正品，需依賴後台「可疑標籤」發現同一碼被多次掃描的情況。

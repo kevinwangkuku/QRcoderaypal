@@ -1,0 +1,15 @@
+<% const first = result.status === 'ok_first'; %>
+<%- include('partials/head', { title: first ? '正品驗證成功' : '重複驗證提醒' }) %>
+<div class="card result <%= first ? 'good' : 'warn' %>">
+  <% if (first) { %>
+  <h1>✅ 正品驗證成功</h1>
+  <% } else { %>
+  <h1>⚠️ 此標籤已驗證過</h1>
+  <p>此標籤已於 <%= fmt(result.first_verify_at) %> 驗證過，共 <%= result.verify_count %> 次。若不是您本人驗證，這件商品可能是複製標籤的仿冒品。</p>
+  <%- include('partials/contact') %>
+  <% } %>
+  <% if (result.product) { %>
+  <p class="product-name"><%= result.product.name %></p>
+  <% } %>
+</div>
+<%- include('partials/foot') %>

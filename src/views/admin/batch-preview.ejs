@@ -1,0 +1,39 @@
+<%- include('../partials/head', { title: '批次預覽' }) %>
+<h1>批次預覽</h1>
+<dl class="kv">
+  <dt>產品</dt><dd><span class="mono"><%= product.id %></span> <%= product.name %></dd>
+  <dt>數量</dt><dd><%= form.quantity.toLocaleString() %></dd>
+  <dt>備註</dt><dd><%= form.note || '—' %></dd>
+  <dt>範例 qrcodedata</dt><dd class="mono"><%= sampleData %></dd>
+  <dt>字元數</dt><dd><%= info.length %></dd>
+  <dt>QR 版本</dt>
+  <dd class="<%= info.version > maxVersion ? 'error' : '' %>">
+    Version <%= info.version %>（<%= info.modules %>×<%= info.modules %> 模組，<%= ecLevel %> 級糾錯）
+    <% if (info.version > maxVersion) { %>
+    <strong>⚠ 超過上限 Version <%= maxVersion %>，7 mm 標籤可能無法辨識。請縮短 BASE_URL 或降低糾錯等級。</strong>
+    <% } %>
+  </dd>
+</dl>
+
+<div class="previews">
+  <figure>
+    <div class="qr qr-7mm"><%- svg %></div>
+    <figcaption>實際大小 7×7 mm<br><small>螢幕縮放可能不準，請以列印為準</small></figcaption>
+  </figure>
+  <figure>
+    <div class="qr qr-large"><%- svg %></div>
+    <figcaption>放大檢視</figcaption>
+  </figure>
+</div>
+
+<form class="form" method="post" action="/admin/batches">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="product_id" value="<%= product.id %>">
+  <input type="hidden" name="quantity" value="<%= form.quantity %>">
+  <input type="hidden" name="note" value="<%= form.note %>">
+  <div class="actions">
+    <button type="submit">確認建立 <%= form.quantity.toLocaleString() %> 張標籤</button>
+    <a href="/admin/batches/new?product=<%= product.id %>">返回修改</a>
+  </div>
+</form>
+<%- include('../partials/foot') %>
