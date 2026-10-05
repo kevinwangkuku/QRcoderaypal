@@ -27,6 +27,17 @@ ask() {
 
 step() { echo; echo "==== $* ===="; }
 
+step "0/7 記憶體保護（swap）"
+# e2-micro 只有 1 GB 記憶體；加 2 GB swap，避免安裝套件或產生大批次時記憶體不足而中斷
+if ! swapon --show | grep -q /swapfile; then
+  fallocate -l 2G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
+free -h
+
 step "1/7 安裝系統套件"
 apt-get update -y
 apt-get install -y curl git rsync sqlite3 openssl ca-certificates gnupg \
